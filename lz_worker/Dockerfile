@@ -49,9 +49,14 @@ FROM ubuntu:bionic
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Dependencies:
+# (1) leelaz
+# (2) sgf-analyzer
+# (3) worker.py script
 RUN apt-get -qq update && apt-get upgrade -y && apt-get install -y \
     libboost-program-options1.65.1 libboost-system1.65.1 libboost-filesystem1.65.1 \
-    python3 python3-numpy python3-yaml python3-matplotlib
+    python3 python3-numpy python3-yaml python3-matplotlib \
+    python3-requests
 
 # copy compiled leelaz
 COPY --from=builder /leela-zero/build/leelaz /bin/
