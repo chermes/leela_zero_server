@@ -56,8 +56,10 @@ RUN apt-get -qq update && apt-get upgrade -y && apt-get install -y \
 # copy compiled leelaz
 COPY --from=builder /leela-zero/build/leelaz /bin/
 
-# copy cloned sgfanalyser
+# copy cloned sgf-analyzer
 COPY --from=builder /sgf-analyzer /opt/sgf-analyzer
+# update sgf-analyzer config
+COPY ./configs/sgf_analyser_config.yaml /opt/sgf-analyzer/config.yaml
 
 # copy latest trained weights
 RUN mkdir -p /opt/leelaz_weights
