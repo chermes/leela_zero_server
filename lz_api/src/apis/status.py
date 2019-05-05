@@ -9,3 +9,5 @@ from . import db_conn
 
 api = Namespace('status', description='Game status.')
 
+status_model = api.model('Status', model={
+})
