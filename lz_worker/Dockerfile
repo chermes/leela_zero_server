@@ -70,3 +70,9 @@ COPY ./configs/sgf_analyser_config.yaml /opt/sgf-analyzer/config.yaml
 RUN mkdir -p /opt/leelaz_weights
 COPY --from=builder /opt/leelaz_weights/network.gz /opt/leelaz_weights/
 
+# install the worker script
+RUN mkdir -p /opt/lz_worker
+COPY src /opt/lz_worker
+
+WORKDIR /opt/lz_worker
+CMD ["python3", "worker.py"]
