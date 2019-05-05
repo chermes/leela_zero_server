@@ -11,8 +11,8 @@ services:
         ports:
             - "8081:5000"
 
-    # lz_api_mongodb:
-    #     image: "mongodb:latest"
+    lz_api_mongodb:
+        image: "mongodb:latest"
 
     # lz_frontend:
     #     build: "./lz_frontend/"
