@@ -17,7 +17,8 @@ no authentication build into it!
 
 ## Installation
 
-* git clone
+* git clone https://github.com/chermes/leela_zero_server.git
+* cd leela_zero_server/
 * docker-compose build
 
 ## Run the Service
