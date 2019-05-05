@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+    lz_worker:
+        build: "./lz_worker/"
+
+    # lz_api:
+
+    # lz_api_mongodb:
+    #     image: "mongodb:latest"
+
+    # lz_frontend:
+    #     build: "./lz_frontend/"
+    #     ports:
+    #         - "8080:80"

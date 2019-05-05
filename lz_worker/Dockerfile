@@ -53,13 +53,13 @@ RUN apt-get -qq update && apt-get upgrade -y && apt-get install -y \
     libboost-program-options1.65.1 libboost-system1.65.1 libboost-filesystem1.65.1 \
     python3 python3-numpy python3-yaml python3-matplotlib
 
-# take over compiled leelaz
+# copy compiled leelaz
 COPY --from=builder /leela-zero/build/leelaz /bin/
 
-# take over cloned sgfanalyser
+# copy cloned sgfanalyser
 COPY --from=builder /sgf-analyzer /opt/sgf-analyzer
 
-# get latest trained weights
+# copy latest trained weights
 RUN mkdir -p /opt/leelaz_weights
 COPY --from=builder /opt/leelaz_weights/network.gz /opt/leelaz_weights/
 
