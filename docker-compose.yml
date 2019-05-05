@@ -3,6 +3,7 @@ version: '3'
 services:
     lz_worker:
         build: "./lz_worker/"
+        image: "lz_worker:latest"
 
     # lz_api:
 
