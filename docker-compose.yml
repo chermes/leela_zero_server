@@ -5,10 +5,11 @@ services:
         build: "./lz_worker/"
         image: "lz_worker:latest"
 
-    # lz_api:
-    #     image: "lz_api:latest"
-    #     ports:
-    #         - "8090:80"
+    lz_api:
+        build: "./lz_api/"
+        image: "lz_api:latest"
+        ports:
+            - "8081:5000"
 
     # lz_api_mongodb:
     #     image: "mongodb:latest"
