@@ -1,6 +1,6 @@
 from flask_restplus import Api
 
-from .status import api as ns_status
+from .game import api as ns_game
 
 api = Api(
     title='Go Game Analysis API',
@@ -8,5 +8,5 @@ api = Api(
     description='Basic Go Game Analysis API',
 )
 
-api.add_namespace(ns_status)
+api.add_namespace(ns_game)
 
