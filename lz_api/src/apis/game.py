@@ -95,7 +95,11 @@ class UploadSgfString(Resource):
             'win_rate': None,
         }
 
-        import pprint
-        pprint.pprint(game)
+        # import pprint
+        # pprint.pprint(game)
+
+        # insert game into the db
+        _, coll = db_conn.get_database_connection()
+        coll.insert_one(game)
 
         return {'game_id': game_id}, 200

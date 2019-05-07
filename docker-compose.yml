@@ -4,19 +4,23 @@ services:
     lz_worker:
         build: "./lz_worker/"
         image: "lz_worker:latest"
-        depends_on:
-            - lz_api
+        # depends_on:
+        #     - lz_api
 
-    lz_api:
-        build: "./lz_api/"
-        image: "lz_api:latest"
-        ports:
-            - "8081:5000"
-        depends_on:
-            - lz_api_mongodb
+    # lz_api:
+    #     build: "./lz_api/"
+    #     image: "lz_api:latest"
+    #     ports:
+    #         - "8081:5000"
+    #     depends_on:
+    #         - lz_api_mongodb
+    #     environment:
+    #         - MONGODB_SERVER=lz_api_mongodb
 
     lz_api_mongodb:
         image: "mongo:latest"
+        ports:
+            - "27017:27017"
 
     # for debugging / development
     mongo-express:

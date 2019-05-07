@@ -75,4 +75,7 @@ RUN mkdir -p /opt/lz_worker
 COPY src /opt/lz_worker
 
 WORKDIR /opt/lz_worker
+ENV API_SERVER localhost
+ENV API_PORT 8081
+
 CMD ["python3", "worker.py"]

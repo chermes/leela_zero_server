@@ -3,9 +3,10 @@
 """
 Database connection management.
 """
+import os
+
 import pymongo
 
-MONGODB_SERVER_ADDRESS = 'lz_api_mongodb'
 MONGODB_SERVER_PORT = 27017
 
 _DB_CUR = None
@@ -13,13 +14,19 @@ _DB_CUR = None
 
 def get_database_connection():
     """
-    Returns the current database connection.
+    Returns the current go database connection and the corresponding games collection.
     """
     global _DB_CUR
 
-    if _DB_CUR is None:
-        client = pymongo.MongoClient(MONGODB_SERVER_ADDRESS,
-                                     MONGODB_SERVER_PORT)
-        _DB_CUR = client.dht22_database
+    try:
+        mongodb_server = os.environ['MONGODB_SERVER']
+    except KeyError:
+        mongodb_server = 'localhost'
 
-    return _DB_CUR
+    if _DB_CUR is None:
+        client = pymongo.MongoClient(mongodb_server, MONGODB_SERVER_PORT)
+        _DB_CUR = client.go_database
+
+    coll = _DB_CUR.games_collection
+
+    return _DB_CUR, coll
