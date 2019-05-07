@@ -4,18 +4,21 @@ services:
     lz_worker:
         build: "./lz_worker/"
         image: "lz_worker:latest"
-        # depends_on:
-        #     - lz_api
+        depends_on:
+            - lz_api
+        environment:
+            - API_SERVER=lz_api
+            - API_PORT=5000
 
-    # lz_api:
-    #     build: "./lz_api/"
-    #     image: "lz_api:latest"
-    #     ports:
-    #         - "8081:5000"
-    #     depends_on:
-    #         - lz_api_mongodb
-    #     environment:
-    #         - MONGODB_SERVER=lz_api_mongodb
+    lz_api:
+        build: "./lz_api/"
+        image: "lz_api:latest"
+        ports:
+            - "8081:5000"
+        depends_on:
+            - lz_api_mongodb
+        environment:
+            - MONGODB_SERVER=lz_api_mongodb
 
     lz_api_mongodb:
         image: "mongo:latest"
