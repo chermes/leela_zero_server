@@ -50,4 +50,4 @@ if __name__ == "__main__":
             logging.error(f'Could not connect to the api {api_address}.')
             sys.exit(-1)
 
-        time.sleep(1)
+        time.sleep(5)
