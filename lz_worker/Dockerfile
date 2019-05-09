@@ -76,6 +76,6 @@ COPY src /opt/lz_worker
 
 WORKDIR /opt/lz_worker
 ENV API_SERVER localhost
-ENV API_PORT 8081
+ENV API_PORT 5000
 
 CMD ["python3", "worker.py"]

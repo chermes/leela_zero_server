@@ -62,14 +62,67 @@ game_model = api.model('Game', model={
 })
 
 
-@api.route('/list_all')
+@api.route('/list/all')
 class ListAll(Resource):
     @api.marshal_list_with(game_model)
     def post(self):
         """
         Returns all available games in the database sorted by creation date.
         """
-        return [], 200
+        _, coll = db_conn.get_database_connection()
+
+        games = list(coll.find({}, sort=[('creation_date', 1)]))
+
+        for game in games:
+            game['game_id'] = game['_id']
+
+        return games, 200
+
+
+@api.route('/list/needs_analysis')
+class ListAll(Resource):
+    @api.marshal_list_with(game_model)
+    @api.response(204, 'No available game could be found.')
+    def post(self):
+        """
+        Returns the next game which still need an analysis (FIFO).
+        """
+        _, coll = db_conn.get_database_connection()
+
+        game = coll.find_one({'status.is_finished': False,
+                              'status.is_running': False},
+                             sort=[('creation_date', 1)])
+
+        if game is None:
+            return 'No game found.', 204
+
+        game['game_id'] = game['_id']
+
+        return game, 200
+
+
+@api.route('/update')
+class Update(Resource):
+    @api.expect(game_model)
+    @api.response(404, "Game could not be updated (there is no matching one in the DB).")
+    def post(self):
+        """
+        Updates the database by the given game.
+        """
+        _, coll = db_conn.get_database_connection()
+
+        game = api.payload
+        game['_id'] = game['game_id']
+        del game['game_id']
+        game['creation_date'] = datetime.datetime.strptime(game['creation_date'], "%Y-%m-%dT%H:%M:%S.%f")
+
+        ur = coll.update_one({'_id': game['_id']}, {'$set': game})
+
+        if ur.modified_count < 1:
+            game_id = game['_id']
+            return f"Game {game_id} could not be found in the DB.", 404
+
+        return 'OK', 200
 
 
 @api.route('/upload/sgf/string')
@@ -94,9 +147,6 @@ class UploadSgfString(Resource):
             'sgf_analyzed': None,
             'win_rate': None,
         }
-
-        # import pprint
-        # pprint.pprint(game)
 
         # insert game into the db
         _, coll = db_conn.get_database_connection()
