@@ -9,10 +9,10 @@ COPY requirements.txt .
 
 RUN pip3 install -r requirements.txt
 
-COPY src /app
-
 ENV MONGODB_SERVER localhost
 EXPOSE 5000
+
+COPY src /app
 
 CMD ["python3", "app.py"]
 
