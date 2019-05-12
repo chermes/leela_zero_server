@@ -62,6 +62,15 @@ game_model = api.model('Game', model={
 })
 
 
+@api.route('/is_alive')
+class IsAlive(Resource):
+    def post(self):
+        """
+        Test to check if this server is already running and responding.
+        """
+        return 'OK', 200
+
+
 @api.route('/list/all')
 class ListAll(Resource):
     @api.marshal_list_with(game_model)
@@ -80,18 +89,38 @@ class ListAll(Resource):
 
 
 @api.route('/list/needs_analysis')
-class ListAll(Resource):
+class ListNeedsAnalysis(Resource):
     @api.marshal_list_with(game_model)
-    @api.response(204, 'No available game could be found.')
     def post(self):
         """
-        Returns the next game which still need an analysis (FIFO).
+        Returns games which still need an analysis (FIFO).
         """
         _, coll = db_conn.get_database_connection()
 
-        game = coll.find_one({'status.is_finished': False,
-                              'status.is_running': False},
-                             sort=[('creation_date', 1)])
+        games = coll.find({'status.is_finished': False,
+                           'status.is_running': False},
+                          sort=[('creation_date', 1)])
+
+        for game in games:
+            game['game_id'] = game['_id']
+
+        return games, 200
+
+
+@api.route('/reserve_for_analysis')
+class ReserveAnalysis(Resource):
+    @api.marshal_with(game_model)
+    @api.response(204, 'No available game could be found.')
+    def post(self):
+        """
+        Returns and reserves the next game which needs an analysis (FIFO).
+        """
+        _, coll = db_conn.get_database_connection()
+
+        game = coll.find_one_and_update(
+            {'status.is_finished': False, 'status.is_running': False},
+            {'$set': {'status.is_finished': False, 'status.is_running': True}},
+            sort=[('creation_date', 1)])
 
         if game is None:
             return 'No game found.', 204
