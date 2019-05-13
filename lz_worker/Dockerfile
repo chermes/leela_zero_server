@@ -35,7 +35,7 @@ RUN mkdir -p /opt/leelaz_weights
 RUN curl http://zero.sjeng.org/best-network --output /opt/leelaz_weights/network.gz
 
 ##################
-#  SGF Analyser  #
+#  SGF Analyzer  #
 ##################
 
 WORKDIR /
