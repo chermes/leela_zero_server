@@ -41,6 +41,14 @@ RUN curl http://zero.sjeng.org/best-network --output /opt/leelaz_weights/network
 WORKDIR /
 RUN git clone https://github.com/chermes/sgf-analyzer.git
 
+#############
+#  SGFMill  #
+#############
+
+WORKDIR /
+RUN git clone https://github.com/mattheww/sgfmill.git
+
+
 #######################################################################
 #                Worker Stage (i.e. without compilers)                #
 #######################################################################
@@ -61,10 +69,13 @@ RUN apt-get -qq update && apt-get upgrade -y && apt-get install -y \
 # copy compiled leelaz
 COPY --from=builder /leela-zero/build/leelaz /bin/
 
+# copy sgfmill (sgf)
+RUN mkdir -p /opt/python3/sgfmill
+COPY --from=builder /sgfmill/sgfmill /opt/python3/sgfmill
+ENV PYTHONPATH /opt/python3
+
 # copy cloned sgf-analyzer
 COPY --from=builder /sgf-analyzer /opt/sgf-analyzer
-# update sgf-analyzer config
-COPY ./configs/sgf_analyser_config.yaml /opt/sgf-analyzer/config.yaml
 
 # copy latest trained weights
 RUN mkdir -p /opt/leelaz_weights
@@ -75,7 +86,12 @@ RUN mkdir -p /opt/lz_worker
 WORKDIR /opt/lz_worker
 ENV API_SERVER localhost
 ENV API_PORT 5000
+ENV SGF_ANALYZER_DIR /opt/sgf-analyzer
 
+# update sgf-analyzer config
+COPY ./configs/sgf_analyser_config.yaml /opt/sgf-analyzer/config.yaml
+
+# install local scripts
 COPY src /opt/lz_worker
 
 CMD ["python3", "worker.py"]
