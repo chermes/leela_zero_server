@@ -131,6 +131,10 @@ class ReserveAnalysis(Resource):
             return 'No game found.', 204
 
         game['game_id'] = game['_id']
+        # also reset status of the found game (!= database game)
+        game['status']['is_finished'] = False
+        game['status']['is_running'] = True
+        game['status']['progress'] = 0.
 
         return game, 200
 
