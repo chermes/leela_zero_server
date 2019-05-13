@@ -122,7 +122,9 @@ class ReserveAnalysis(Resource):
 
         game = coll.find_one_and_update(
             {'status.is_finished': False, 'status.is_running': False},
-            {'$set': {'status.is_finished': False, 'status.is_running': True}},
+            {'$set': {'status': {'is_finished': False,
+                                 'is_running': True,
+                                 'progress': 0.}}},
             sort=[('creation_date', 1)])
 
         if game is None:
