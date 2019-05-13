@@ -11,6 +11,9 @@ import logging
 
 import requests
 
+from sgf_analyzer_wrapper import analyze_game
+
+
 if __name__ == "__main__":
     try:
         api_server = os.environ['API_SERVER']
@@ -45,15 +48,19 @@ if __name__ == "__main__":
         elif r.status_code == 200:
             game = r.json()
 
-            #  TODO: process that game <09-05-19, Christoph Hermes> # 
             print('LEELA PROCESSING...')
-            time.sleep(10)
+            for progress, sgf_a, win_rate in analyze_game(game['sgf_orig']):
+                game['status']['progress'] = progress
+                requests.post(api_address + '/game/update', json=game)
             print('LEELA PROCESSING... Done.')
 
             # update game status
             game['status']['is_finished'] = True
             game['status']['is_running'] = False
-            # TODO: update analysed game info <09-05-19, Christoph Hermes> # 
+            game['sgf_analyzed'] = sgf_a
+            game['win_rate'] = [{'move': m,
+                                 'win_rate_b': r / 100.}
+                                for m, r in win_rate]
             requests.post(api_address + '/game/update', json=game)
 
         else:

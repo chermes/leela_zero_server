@@ -19,6 +19,9 @@ status_model = api.model('Status', model={
     'is_running': fields.Boolean(required=True,
                                  description='Is the analyze currently running?',
                                  example=True),
+    'progress': fields.Float(required=True,
+                             description='Progress (percent) of the SGF analysis.',
+                             example=55.0),
 })
 
 win_rate_model = api.model('WinRate', model={
@@ -40,7 +43,7 @@ game_id_model = api.model('GameID', model={
 sgf_string_model = api.model('SgfString', model={
     'sgf_string': fields.String(required=False,
                                 description='SGF content.',
-                                example='(;GM[1]FF[4]AP[qGo:2.1.0]ST[1] SZ[19]HA[0]KM[5.5]PW[White]PB[Black] ;B[pd])'),
+                                example='(;GM[1]FF[4]AP[qGo:2.1.0]ST[1] SZ[19]HA[0]KM[5.5]PW[White]PB[Black] ;B[pd];W[dp];B[qp];W[dd];B[nq])'),
 })
 
 game_model = api.model('Game', model={
@@ -171,7 +174,8 @@ class UploadSgfString(Resource):
             'creation_date': datetime.datetime.now(),
             'status': {
                 'is_finished': False,
-                'is_running': False
+                'is_running': False,
+                'progress': 0.,
             },
             'sgf_analyzed': None,
             'win_rate': None,
