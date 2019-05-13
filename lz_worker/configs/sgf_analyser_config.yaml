@@ -12,7 +12,7 @@ config:
 
   stop_on_winrate: 0.95       # Stops analysis on this winrate drop
 
-  analyze_time: 120            # How many seconds to use per game moves analysis (default=60)
+  analyze_time: 30             # How many seconds to use per game moves analysis (default=60)
   analyze_threshold: 0.025     # Display analysis on moves losing at least this much of win rate (default=0.05)
 
   variations_threshold: 0.05   # Explore variations on moves losing at least this much of win rate (default=0.05)
