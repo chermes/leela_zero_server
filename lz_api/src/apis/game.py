@@ -7,6 +7,7 @@ import uuid
 import datetime
 
 from flask_restplus import Resource, fields, Namespace
+from sgfmill import sgf
 
 from . import db_conn
 
@@ -167,16 +168,23 @@ class Update(Resource):
 class UploadSgfString(Resource):
     @api.expect(sgf_string_model)
     @api.marshal_with(game_id_model)
+    @api.response(400, 'No valid SGF format.')
     def post(self):
         """
         Upload a SGF by raw string.
         """
         game_id = uuid.uuid4().hex
 
+        # check sgf input
+        try:
+            sgf_game = sgf.Sgf_game.from_string(api.payload['sgf_string'])
+        except ValueError:
+            return 'No valid SGF format.', 400
+
         game = {
             '_id': game_id,
             'name': 'Raw SGF upload',
-            'sgf_orig': api.payload['sgf_string'],
+            'sgf_orig': sgf_game.serialise().decode('utf-8'),
             'creation_date': datetime.datetime.now(),
             'status': {
                 'is_finished': False,
