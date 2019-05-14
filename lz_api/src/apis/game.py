@@ -184,6 +184,9 @@ class UploadSgfString(Resource):
         except ValueError:
             return 'No valid SGF format.', 400
 
+        if sgf_game.get_size() != 19:
+            return 'Board size must be 19x19, not %dx%d' % (sgf_game.get_size(), sgf_game.get_size()), 400
+
         game = {
             '_id': game_id,
             'name': 'Raw SGF upload',
