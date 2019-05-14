@@ -1,5 +1,6 @@
 flask-cors
 flask-restplus
 pymongo
+requests
 sgfmill
 

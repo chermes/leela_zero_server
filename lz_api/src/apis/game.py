@@ -6,6 +6,7 @@ game/ entry point.
 import uuid
 import datetime
 
+import requests
 from flask_restplus import Resource, fields, Namespace
 from sgfmill import sgf
 
@@ -47,6 +48,12 @@ sgf_string_model = api.model('SgfString', model={
                                 example='(;GM[1]FF[4]AP[qGo:2.1.0]ST[1] SZ[19]HA[0]KM[5.5]PW[White]PB[Black] ;B[pd];W[dp];B[qp];W[dd];B[nq])'),
 })
 
+ogs_game_id_model = api.model('OnlineGoGame', model={
+    'ogs_game_id': fields.String(required=True,
+                                 description='OGS game number.',
+                                 example='17049439'),
+})
+
 game_model = api.model('Game', model={
     'game_id': game_id_model['game_id'],
     'name': fields.String(required=True,
@@ -64,6 +71,62 @@ game_model = api.model('Game', model={
                             required=False,
                             description='Estimated win rate (black) for each move.'),
 })
+
+
+def _add_sgf_game_to_db(sgf_raw, is_bytes, name):
+    """
+    Append a raw SGF to the database (incl. some validation checks).
+
+    Parameters
+    ----------
+    sgf_raw : bytes or str
+        Raw SGF game.
+    is_bytes : boolean
+        Is the raw SGF in bytes?
+    name : str
+        Title of the game.
+
+    Returns
+    -------
+    game_id : str
+        Generated game ID.
+    status_code : int
+        200: success.
+        400: invalid SGF.
+    """
+    game_id = uuid.uuid4().hex
+
+    # check sgf input
+    try:
+        if is_bytes:
+            sgf_game = sgf.Sgf_game.from_bytes(sgf_raw)
+        else:
+            sgf_game = sgf.Sgf_game.from_string(sgf_raw)
+    except ValueError:
+        return 'No valid SGF format.', 400
+
+    if sgf_game.get_size() != 19:
+        return 'Board size must be 19x19, not %dx%d' % (sgf_game.get_size(), sgf_game.get_size()), 400
+
+    game = {
+        '_id': game_id,
+        'name': name,
+        'sgf_orig': sgf_game.serialise().decode('utf-8'),
+        'creation_date': datetime.datetime.now(),
+        'status': {
+            'is_finished': False,
+            'is_running': False,
+            'progress': 0.,
+        },
+        'sgf_analyzed': None,
+        'win_rate': None,
+    }
+
+    # insert game into the db
+    _, coll = db_conn.get_database_connection()
+    coll.insert_one(game)
+
+    return game_id, 200
 
 
 @api.route('/is_alive')
@@ -176,33 +239,26 @@ class UploadSgfString(Resource):
         """
         Upload a SGF by raw string.
         """
-        game_id = uuid.uuid4().hex
+        game_id, return_code = _add_sgf_game_to_db(api.payload['sgf_string'], False, 'Raw SGF upload')
 
-        # check sgf input
-        try:
-            sgf_game = sgf.Sgf_game.from_string(api.payload['sgf_string'])
-        except ValueError:
-            return 'No valid SGF format.', 400
+        return {'game_id': game_id}, return_code
 
-        if sgf_game.get_size() != 19:
-            return 'Board size must be 19x19, not %dx%d' % (sgf_game.get_size(), sgf_game.get_size()), 400
 
-        game = {
-            '_id': game_id,
-            'name': 'Raw SGF upload',
-            'sgf_orig': sgf_game.serialise().decode('utf-8'),
-            'creation_date': datetime.datetime.now(),
-            'status': {
-                'is_finished': False,
-                'is_running': False,
-                'progress': 0.,
-            },
-            'sgf_analyzed': None,
-            'win_rate': None,
-        }
+@api.route('/upload/ogs/id')
+class UploadOgsId(Resource):
+    @api.expect(ogs_game_id_model)
+    @api.marshal_with(game_id_model)
+    @api.response(400, 'No valid SGF format.')
+    def post(self):
+        """
+        Upload a SGF by online-go (OGS) game number.
+        """
+        # fetch SGF via the OGS API
+        r = requests.get('https://online-go.com/api/v1/games/%s/sgf' % api.payload['ogs_game_id'])
+        if r.status_code != 200:
+            return 'Unable to load the OGS game.', 400
+        raw_sgf_bytes = r.content
 
-        # insert game into the db
-        _, coll = db_conn.get_database_connection()
-        coll.insert_one(game)
+        game_id, return_code = _add_sgf_game_to_db(raw_sgf_bytes, True, 'OGS Game %s' % api.payload['ogs_game_id'])
 
-        return {'game_id': game_id}, 200
+        return {'game_id': game_id}, return_code
