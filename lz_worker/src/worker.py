@@ -59,7 +59,7 @@ if __name__ == "__main__":
             game['status']['is_running'] = False
             game['sgf_analyzed'] = sgf_a
             game['win_rate'] = [{'move': m,
-                                 'win_rate_b': r / 100.}
+                                 'win_rate_black': r / 100.}
                                 for m, r in win_rate]
             requests.post(api_address + '/game/update', json=game)
 
