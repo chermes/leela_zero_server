@@ -12,7 +12,7 @@ import re
 from sgfmill import sgf as sgfmill
 
 regex_analyze_progress = re.compile(r'.*Analysis done for ([0-9]+)/([0-9]+) move.*')
-regex_winrate = re.compile(r'Overall black win\%: ([0-9]+\.[0-9]+)\%')
+regex_winrate = re.compile(r'.*Overall black win\%: ([0-9]+\.[0-9]+)\%.*')
 
 
 def get_sgf_analyzer_dir():
