@@ -81,9 +81,6 @@ def analyze_game(sgf):
             sgf_analyzed = ''.join(fid.readlines())
 
         # parse the win rate out of the comments
-        with open(osp.join('/tmp', 'test.sgf'), 'wt') as fid:
-            fid.write(sgf_analyzed)
-
         game = sgfmill.Sgf_game.from_string(sgf_analyzed)
         for move, node in enumerate(game.get_main_sequence()):
             if node.has_property('C'):
