@@ -101,9 +101,12 @@ class ListNeedsAnalysis(Resource):
         """
         _, coll = db_conn.get_database_connection()
 
-        games = coll.find({'status.is_finished': False,
-                           'status.is_running': False},
-                          sort=[('creation_date', 1)])
+        games = coll.aggregate([
+            {'$match': {'status.is_finished': False,
+                        'status.is_running': False}},
+            {'$sort': {'creation_date': 1}}
+        ])
+        games = list(games)
 
         for game in games:
             game['game_id'] = game['_id']
