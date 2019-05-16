@@ -5,12 +5,15 @@ game/ entry point.
 """
 import uuid
 import datetime
+import re
 
 import requests
 from flask_restplus import Resource, fields, Namespace
 from sgfmill import sgf
 
 from . import db_conn
+
+regex_ogs_url = re.compile(r'.*http[s]*://online-go.com/game/([0-9]+).*$')
 
 api = Namespace('game', description='Game information and changes.')
 
@@ -48,10 +51,16 @@ sgf_string_model = api.model('SgfString', model={
                                 example='(;GM[1]FF[4]AP[qGo:2.1.0]ST[1] SZ[19]HA[0]KM[5.5]PW[White]PB[Black] ;B[pd];W[dp];B[qp];W[dd];B[nq])'),
 })
 
-ogs_game_id_model = api.model('OnlineGoGame', model={
+ogs_game_id_model = api.model('OnlineGoGameId', model={
     'ogs_game_id': fields.String(required=True,
                                  description='OGS game number.',
                                  example='17049439'),
+})
+
+ogs_game_url_model = api.model('OnlineGoGameUrl', model={
+    'ogs_game_url': fields.Url(required=True,
+                               description='OGS game link. The OGS game ID will be parsed from it.',
+                               example='https://online-go.com/game/17049439'),
 })
 
 game_model = api.model('Game', model={
@@ -274,7 +283,7 @@ class UploadSgfString(Resource):
 class UploadOgsId(Resource):
     @api.expect(ogs_game_id_model)
     @api.marshal_with(game_id_model)
-    @api.response(400, 'No valid SGF format.')
+    @api.response(400, 'No valid OGS Id.')
     def post(self):
         """
         Upload a SGF by online-go (OGS) game number.
@@ -286,5 +295,31 @@ class UploadOgsId(Resource):
         raw_sgf_bytes = r.content
 
         game_id, return_code = _add_sgf_game_to_db(raw_sgf_bytes, True, 'OGS Game %s' % api.payload['ogs_game_id'])
+
+        return {'game_id': game_id}, return_code
+
+
+@api.route('/upload/ogs/url')
+class UploadOgsUrl(Resource):
+    @api.expect(ogs_game_url_model)
+    @api.marshal_with(game_id_model)
+    @api.response(400, 'No valid OGS link.')
+    def post(self):
+        """
+        Upload a SGF by online-go (OGS) game link / url.
+        """
+        # parse the OGS game id from the url
+        m = regex_ogs_url.match(api.payload['ogs_game_url'])
+        if m is None:
+            return 'Invalid OGS url.', 400
+        ogs_game_id = m.group(1)
+
+        # fetch SGF via the OGS API
+        r = requests.get('https://online-go.com/api/v1/games/%s/sgf' % ogs_game_id)
+        if r.status_code != 200:
+            return 'Unable to load the OGS game.', 400
+        raw_sgf_bytes = r.content
+
+        game_id, return_code = _add_sgf_game_to_db(raw_sgf_bytes, True, 'OGS Game %s' % ogs_game_id)
 
         return {'game_id': game_id}, return_code
