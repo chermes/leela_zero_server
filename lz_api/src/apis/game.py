@@ -144,15 +144,41 @@ class ListAll(Resource):
     def post(self):
         """
         Returns all available games in the database sorted by creation date.
+        This excludes the game and the analysis itself.
         """
         _, coll = db_conn.get_database_connection()
 
-        games = list(coll.find({}, sort=[('creation_date', 1)]))
+        games = list(coll.find({}, sort=[('creation_date', 1)],
+                               projection={
+                                   'name': 1,
+                                   'creation_date': 1,
+                                   'status': 1,
+                               }))
 
         for game in games:
             game['game_id'] = game['_id']
 
         return games, 200
+
+
+@api.route('/info')
+class Info(Resource):
+    @api.expect(game_id_model)
+    @api.marshal_with(game_model)
+    @api.response(404, 'Game not found in the DB.')
+    def post(self):
+        """
+        Returns the full game model by the given id.
+        """
+        _, coll = db_conn.get_database_connection()
+
+        game = coll.find_one({'_id': api.payload['game_id']})
+        if game is None:
+            return 'Game not found', 404
+
+        game['game_id'] = game['_id']
+
+        return game, 200
 
 
 @api.route('/list/needs_analysis')
