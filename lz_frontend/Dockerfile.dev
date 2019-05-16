@@ -1,0 +1,9 @@
+# vim:set et sw=4 ts=4 ft=dockerfile:
+# Development container to create, compile and run the frontend.
+
+FROM node:12
+
+RUN npm install -g @vue/cli
+
+RUN mkdir /src
+WORKDIR /src
