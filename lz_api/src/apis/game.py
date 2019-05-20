@@ -6,9 +6,11 @@ game/ entry point.
 import uuid
 import datetime
 import re
+import os.path as osp
 
 import requests
-from flask_restplus import Resource, fields, Namespace
+import werkzeug
+from flask_restplus import Resource, fields, Namespace, reqparse
 from sgfmill import sgf
 
 from . import db_conn
@@ -16,6 +18,14 @@ from . import db_conn
 regex_ogs_url = re.compile(r'.*http[s]*://online-go.com/game/([0-9]+).*$')
 
 api = Namespace('game', description='Game information and changes.')
+
+# parsers.py
+file_upload = reqparse.RequestParser()
+file_upload.add_argument('sgf_file',
+                         type=werkzeug.datastructures.FileStorage,
+                         location='files',
+                         required=True,
+                         help='SGF file')
 
 status_model = api.model('Status', model={
     'is_finished': fields.Boolean(required=True,
@@ -277,6 +287,28 @@ class UploadSgfString(Resource):
         game_id, return_code = _add_sgf_game_to_db(api.payload['sgf_string'], False, 'Raw SGF upload')
 
         return {'game_id': game_id}, return_code
+
+
+@api.route('/upload/sgf/file')
+class UploadSgfFile(Resource):
+    @api.expect(file_upload)
+    @api.marshal_with(game_id_model)
+    def post(self):
+        args = file_upload.parse_args()
+        if args['sgf_file'].mimetype == 'application/x-fme-vectordata':
+            # read the sgf file from stream
+            f = args['sgf_file']
+            sgf_string = ''.join([l.decode('utf-8').strip() for l in f.stream.readlines()])
+
+            fname = osp.basename(f.filename)
+            game_id, return_code = _add_sgf_game_to_db(sgf_string, False, 'File %s' % fname)
+
+            return {'game_id': game_id}, return_code
+
+        else:
+            return "Unknown mime type %s. Should be application/x-fme-vectordata" % args['sgf_file'].mimetype, 404
+
+        return "OK", 200
 
 
 @api.route('/upload/ogs/id')
