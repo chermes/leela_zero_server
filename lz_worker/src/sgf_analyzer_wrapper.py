@@ -50,8 +50,9 @@ def analyze_game(sgf):
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         # write sgf file
-        with open(osp.join(tmp_dir, 'game.sgf'), 'wt') as fid:
-            fid.write(sgf)
+        with open(osp.join(tmp_dir, 'game.sgf'), 'wb') as fid:
+            g = sgfmill.Sgf_game.from_string(sgf)
+            fid.write(g.serialise())
 
         # analyze the game
         cmd_dir = get_sgf_analyzer_dir()
