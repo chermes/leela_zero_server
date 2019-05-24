@@ -1,4 +1,5 @@
 {
+  "_comment": " vim:set et sw=2 ts=2: ",
   "name": "lz_frontend",
   "version": "0.1.0",
   "private": true,
@@ -9,7 +10,8 @@
   },
   "dependencies": {
     "core-js": "^2.6.5",
-    "vue": "^2.6.10"
+    "vue": "^2.6.10",
+    "bootstrap-vue": "^2.0.0-rc.20"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.7.0",
