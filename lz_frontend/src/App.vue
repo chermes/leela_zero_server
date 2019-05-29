@@ -28,23 +28,27 @@
       </b-button-toolbar>
     </b-jumbotron>
 
-    <b-form-group horizontal :label-cols="4" description="Let us know your name." label="Enter your name">
-      <b-form-input v-model.trim="name"></b-form-input>
-    </b-form-group>
+    <b-row>
+      <b-col cols="3">
+        <GameList/>
+      </b-col>
+      <b-col cols="9">
+        <HelloWorld msg="Welcome to Your Vue.js App"/>
+      </b-col>
+    </b-row>
 
-    <b-alert variant="success" :show="showAlert">Hello {{ name }}</b-alert>
-
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
   </b-container>
 </template>
 
 <script>
 import HelloWorld from './components/HelloWorld.vue'
+import GameList from './components/GameList.vue'
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    HelloWorld,
+    GameList
   }
 }
 </script>
