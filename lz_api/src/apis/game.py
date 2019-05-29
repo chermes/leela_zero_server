@@ -10,7 +10,7 @@ import os.path as osp
 
 import requests
 import werkzeug
-from flask_restplus import Resource, fields, Namespace, reqparse
+from flask_restplus import Resource, fields, Namespace, reqparse, abort
 from sgfmill import sgf
 
 from . import db_conn
@@ -122,10 +122,10 @@ def _add_sgf_game_to_db(sgf_raw, is_bytes, name):
         else:
             sgf_game = sgf.Sgf_game.from_string(sgf_raw)
     except ValueError:
-        return 'No valid SGF format.', 400
+        abort(400, 'No valid SGF format.')
 
     if sgf_game.get_size() != 19:
-        return 'Board size must be 19x19, not %dx%d' % (sgf_game.get_size(), sgf_game.get_size()), 400
+        abort(400, 'Board size must be 19x19, not %dx%d' % (sgf_game.get_size(), sgf_game.get_size()))
 
     game = {
         '_id': game_id,
@@ -184,7 +184,7 @@ class ListAll(Resource):
 class Info(Resource):
     @api.expect(game_id_model)
     @api.marshal_with(game_model)
-    @api.response(404, 'Game not found in the DB.')
+    @api.response(400, 'Game not found in the DB.')
     def post(self):
         """
         Returns the full game model by the given id.
@@ -193,7 +193,8 @@ class Info(Resource):
 
         game = coll.find_one({'_id': api.payload['game_id']})
         if game is None:
-            return 'Game not found', 404
+            abort(400, 'Game not found')
+
 
         game['game_id'] = game['_id']
 
@@ -240,7 +241,7 @@ class ReserveAnalysis(Resource):
             sort=[('creation_date', 1)])
 
         if game is None:
-            return 'No game found.', 204
+            abort(204, 'No game found.')
 
         game['game_id'] = game['_id']
         # also reset status of the found game (!= database game)
@@ -254,7 +255,7 @@ class ReserveAnalysis(Resource):
 @api.route('/update')
 class Update(Resource):
     @api.expect(game_model)
-    @api.response(404, "Game could not be updated (there is no matching one in the DB).")
+    @api.response(400, "Game could not be updated (there is no matching one in the DB).")
     def post(self):
         """
         Updates the database by the given game.
@@ -270,7 +271,7 @@ class Update(Resource):
 
         if ur.modified_count < 1:
             game_id = game['_id']
-            return f"Game {game_id} could not be found in the DB.", 404
+            abort(400, f"Game {game_id} could not be found in the DB.")
 
         return 'OK', 200
 
@@ -306,7 +307,7 @@ class UploadSgfFile(Resource):
             return {'game_id': game_id}, return_code
 
         else:
-            return "Unknown mime type %s. Should be application/x-fme-vectordata" % args['sgf_file'].mimetype, 404
+            abort(400, "Unknown mime type %s. Should be application/x-fme-vectordata" % args['sgf_file'].mimetype)
 
         return "OK", 200
 
@@ -323,7 +324,7 @@ class UploadOgsId(Resource):
         # fetch SGF via the OGS API
         r = requests.get('https://online-go.com/api/v1/games/%s/sgf' % api.payload['ogs_game_id'])
         if r.status_code != 200:
-            return 'Unable to load the OGS game.', 400
+            abort(400, 'Unable to load the OGS game.')
         raw_sgf_bytes = r.content
 
         game_id, return_code = _add_sgf_game_to_db(raw_sgf_bytes, True, 'OGS Game %s' % api.payload['ogs_game_id'])
@@ -343,13 +344,13 @@ class UploadOgsUrl(Resource):
         # parse the OGS game id from the url
         m = regex_ogs_url.match(api.payload['ogs_game_url'])
         if m is None:
-            return 'Invalid OGS url.', 400
+            abort(400, 'Invalid OGS url.')
         ogs_game_id = m.group(1)
 
         # fetch SGF via the OGS API
         r = requests.get('https://online-go.com/api/v1/games/%s/sgf' % ogs_game_id)
         if r.status_code != 200:
-            return 'Unable to load the OGS game.', 400
+            abort(400, 'Unable to load the OGS game.')
         raw_sgf_bytes = r.content
 
         game_id, return_code = _add_sgf_game_to_db(raw_sgf_bytes, True, 'OGS Game %s' % ogs_game_id)
