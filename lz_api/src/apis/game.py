@@ -241,7 +241,7 @@ class ReserveAnalysis(Resource):
             sort=[('creation_date', 1)])
 
         if game is None:
-            abort(204, 'No game found.')
+            return {}, 204
 
         game['game_id'] = game['_id']
         # also reset status of the found game (!= database game)
